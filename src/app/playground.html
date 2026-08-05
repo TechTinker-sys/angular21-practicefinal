@@ -169,10 +169,20 @@
       </div>
 
       <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-800/60">
-        <div class="flex items-center justify-between gap-3">
-          <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
-            {{ editingPostId() ? 'Edit Post' : 'Create New Post' }}
-          </h3>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+              {{ editingPostId() ? 'Edit Post' : 'Create New Post' }}
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              @if (posts().length) {
+                Showing {{ filteredPosts().length }} of {{ posts().length }} posts
+              } @else {
+                Start by loading posts or creating a new one.
+              }
+            </p>
+          </div>
+
           @if (toast()) {
             <p class="rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white shadow-sm dark:bg-white dark:text-slate-950">
               {{ toast() }}
@@ -218,32 +228,118 @@
         </form>
       </div>
 
-      @if (posts().length) {
-        <ul class="mt-5 space-y-3">
-          @for (post of posts(); track post.id) {
-            <li class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
-              <strong class="text-sm font-semibold text-slate-900 dark:text-white">{{ post.title }}</strong>
-              <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">{{ post.body }}</p>
-              <div class="mt-3 flex gap-2">
-                <button
-                  type="button"
-                  (click)="startEdit(post)"
-                  class="rounded-full border border-slate-300 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-700"
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  (click)="deletePost(post.id)"
-                  [disabled]="postsLoading()"
-                  class="rounded-full bg-red-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
+      <div class="mt-5 grid gap-3">
+        @if (lastDeletedPost()) {
+          <div class="flex items-center justify-between rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800/50 dark:bg-amber-900/10 dark:text-amber-100">
+            <span>Post deleted. You can undo within 5 seconds.</span>
+            <button
+              type="button"
+              (click)="undoDelete()"
+              class="rounded-full bg-amber-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-amber-700"
+            >
+              Undo
+            </button>
+          </div>
+        }
+
+        @if (posts().length) {
+          <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-slate-100 p-4 dark:border-slate-700 dark:bg-slate-800">
+            <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Filter posts</label>
+            <input
+              type="text"
+              [value]="postSearch()"
+              (input)="postSearch.set($any($event.target).value)"
+              placeholder="Search title or body"
+              class="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-sm transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            />
+          </div>
+        }
+      </div>
+
+      @if (postsLoading() && !posts().length) {
+        <div class="mt-5 grid gap-3">
+          @for (skeleton of [0, 1, 2, 3]; track skeleton) {
+            <div class="animate-pulse rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+              <div class="h-4 w-3/4 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+              <div class="mt-3 h-3 w-full rounded-full bg-slate-300 dark:bg-slate-700"></div>
+              <div class="mt-2 h-3 w-5/6 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+            </div>
           }
-        </ul>
+        </div>
+      } @else {
+        @if (filteredPosts().length) {
+          <ul class="mt-5 space-y-3">
+            @for (post of filteredPosts(); track post.id) {
+              <li class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+                @if (inlineEditPostId() === post.id) {
+                  <div class="space-y-3">
+                    <input
+                      type="text"
+                      [value]="inlineEditTitle()"
+                      (input)="inlineEditTitle.set($any($event.target).value)"
+                      class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                    />
+                    <textarea
+                      rows="3"
+                      [value]="inlineEditBody()"
+                      (input)="inlineEditBody.set($any($event.target).value)"
+                      class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                    ></textarea>
+                    <div class="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        (click)="saveInlineEdit(post)"
+                        class="rounded-lg bg-sky-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-sky-700"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        (click)="cancelInlineEdit()"
+                        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                } @else {
+                  <div>
+                    <strong class="text-sm font-semibold text-slate-900 dark:text-white">{{ post.title }}</strong>
+                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">{{ post.body }}</p>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        (click)="startEdit(post)"
+                        class="rounded-full border border-slate-300 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-700"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        (click)="startInlineEdit(post)"
+                        class="rounded-full border border-slate-300 bg-slate-100 px-4 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-700"
+                      >
+                        Inline Edit
+                      </button>
+                      <button
+                        type="button"
+                        (click)="deletePost(post.id)"
+                        [disabled]="postsLoading()"
+                        class="rounded-full bg-red-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        } @else if (posts().length) {
+          <p class="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            No posts match your search.
+          </p>
+        }
       }
     </article>
   </div>
