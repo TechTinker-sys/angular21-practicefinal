@@ -34,7 +34,17 @@ export class Playground {
     email: new FormControl('', [Validators.required, Validators.email])
   });
 
+  formSubmitMessage = signal('');
+
   submitForm() {
+    if (this.myForm.valid) {
+      this.formSubmitMessage.set('Form submitted successfully.');
+      // clear after a short delay
+      setTimeout(() => this.formSubmitMessage.set(''), 3000);
+    } else {
+      this.formSubmitMessage.set('Please complete the required fields.');
+      setTimeout(() => this.formSubmitMessage.set(''), 3000);
+    }
     console.log(this.myForm.value);
   }
 
