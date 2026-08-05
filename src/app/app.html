@@ -1,0 +1,75 @@
+<div class="flex min-h-screen flex-col bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <header class="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl transition-colors duration-300 dark:border-slate-800/80 dark:bg-slate-950/80">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+      <a routerLink="/home" class="flex items-center gap-2.5">
+        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 text-sm font-extrabold text-white shadow-lg shadow-sky-500/25">
+          A
+        </span>
+        <span class="flex flex-col leading-tight">
+          <span class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Enterprise UI</span>
+          <span class="text-sm font-bold text-slate-900 dark:text-white">{{ title() }}</span>
+        </span>
+      </a>
+
+      <nav class="hidden items-center gap-1 rounded-full border border-slate-200 bg-slate-100/70 p-1 dark:border-slate-800 dark:bg-slate-900/70 md:flex">
+        @for (link of navLinks; track link.path) {
+          <a
+            [routerLink]="link.path"
+            routerLinkActive="bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+          >
+            {{ link.label }}
+          </a>
+        }
+      </nav>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="toggleTheme()"
+          class="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-sky-300 hover:text-sky-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-sky-500 dark:hover:text-sky-400"
+          [attr.aria-label]="isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
+        >
+          @if (isDark()) {
+            <span class="text-lg">☀️</span>
+          } @else {
+            <span class="text-lg">🌙</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          (click)="toggleMobileMenu()"
+          class="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 md:hidden"
+          aria-label="Toggle menu"
+        >
+          <span class="text-lg">{{ mobileMenuOpen() ? '✕' : '☰' }}</span>
+        </button>
+      </div>
+    </div>
+
+    @if (mobileMenuOpen()) {
+      <nav class="flex flex-col gap-1 border-t border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950 md:hidden">
+        @for (link of navLinks; track link.path) {
+          <a
+            [routerLink]="link.path"
+            routerLinkActive="bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+            (click)="closeMobileMenu()"
+            class="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 transition dark:text-slate-300"
+          >
+            {{ link.label }}
+          </a>
+        }
+      </nav>
+    }
+  </header>
+
+  <main class="flex-1 transition duration-300 ease-out" [class.opacity-0]="!routeTransition()" [class.opacity-100]="routeTransition()" [class.translate-y-2]="!routeTransition()" [class.translate-y-0]="routeTransition()">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="border-t border-slate-200 bg-white/60 py-6 text-center text-sm text-slate-500 transition-colors duration-300 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-500">
+    Built with Angular 21 &middot; Signals &middot; Tailwind CSS
+  </footer>
+</div>
