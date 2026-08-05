@@ -140,6 +140,10 @@ export class Playground {
   }
 
   deletePost(id: number) {
+    // Confirm before deleting for UX safety
+    const ok = window.confirm('Are you sure you want to delete this post?');
+    if (!ok) return;
+
     this.http.delete(`https://jsonplaceholder.typicode.com/posts/${id}`).subscribe({
       next: () => {
         this.posts.set(this.posts().filter((p) => p.id !== id));
