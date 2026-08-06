@@ -1,7 +1,7 @@
 import { Component, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { NgFor } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { Child } from '../../../shared/components/child/child';
@@ -10,7 +10,7 @@ import { Child } from '../../../shared/components/child/child';
   selector: 'app-playground',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Child, ReactiveFormsModule, NgFor],
+  imports: [Child, ReactiveFormsModule, NgFor, NgIf],
   templateUrl: './playground.html'
 })
 export class Playground {
