@@ -65,3 +65,7 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Architecture
+
+The application has been reorganized into a modern Angular structure with `core`, `shared`, and `features` folders. See `docs/ARCHITECTURE.md` for the full design rationale and folder layout.
