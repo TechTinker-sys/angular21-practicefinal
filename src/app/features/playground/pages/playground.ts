@@ -117,13 +117,19 @@ export class Playground {
 
   createPost() {
     const newPost = this.postForm.value;
+    const localPost = { id: Date.now(), ...newPost };
+
     this.http.post<any>('https://jsonplaceholder.typicode.com/posts', newPost).subscribe({
       next: (created) => {
         this.posts.set([created, ...this.posts()]);
         this.postForm.reset();
         this.showToast('Post created successfully.');
       },
-      error: () => this.showToast('Failed to create post.')
+      error: () => {
+        this.posts.set([localPost, ...this.posts()]);
+        this.postForm.reset();
+        this.showToast('Post created locally; API call failed.');
+      }
     });
   }
 
