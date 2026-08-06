@@ -1,20 +1,19 @@
 import { Component, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { NgFor } from '@angular/common';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { Child } from './child';
-import { Card } from './card';
+import { Child } from '../../../shared/components/child/child';
 
 @Component({
   selector: 'app-playground',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Child, Card, ReactiveFormsModule],
+  imports: [Child, ReactiveFormsModule, NgFor],
   templateUrl: './playground.html'
 })
 export class Playground {
-  // ---------- Counter ----------
   count = signal(0);
   doubleCount = computed(() => this.count() * 2);
 
@@ -28,7 +27,6 @@ export class Playground {
     this.childMessage.set(msg);
   }
 
-  // ---------- Reactive Form ----------
   myForm = new FormGroup({
     name: new FormControl('', Validators.required),
     email: new FormControl('', [Validators.required, Validators.email])
@@ -39,7 +37,6 @@ export class Playground {
   submitForm() {
     if (this.myForm.valid) {
       this.formSubmitMessage.set('Form submitted successfully.');
-      // clear after a short delay
       setTimeout(() => this.formSubmitMessage.set(''), 3000);
     } else {
       this.formSubmitMessage.set('Please complete the required fields.');
@@ -48,7 +45,6 @@ export class Playground {
     console.log(this.myForm.value);
   }
 
-  // ---------- RxJS Search ----------
   searchResult = signal('');
   private searchSubject = new Subject<string>();
 
@@ -63,7 +59,6 @@ export class Playground {
     this.searchSubject.next(value);
   }
 
-  // ---------- HttpClient Users ----------
   users = signal<any[]>([]);
   usersLoading = signal(false);
 
@@ -79,7 +74,6 @@ export class Playground {
     });
   }
 
-  // ---------- CRUD for Posts ----------
   posts = signal<any[]>([]);
   postsLoading = signal(false);
   toast = signal('');
@@ -113,7 +107,7 @@ export class Playground {
     this.postsLoading.set(true);
     this.http.get<any[]>('https://jsonplaceholder.typicode.com/posts').subscribe({
       next: (data) => {
-        this.posts.set(data.slice(0, 10)); // just first 10 for practice
+        this.posts.set(data.slice(0, 10));
         this.showToast('Posts loaded successfully.');
       },
       error: () => this.showToast('Unable to load posts.'),
@@ -125,7 +119,6 @@ export class Playground {
     const newPost = this.postForm.value;
     this.http.post<any>('https://jsonplaceholder.typicode.com/posts', newPost).subscribe({
       next: (created) => {
-        // API doesn't really save it, so we add it manually to our list
         this.posts.set([created, ...this.posts()]);
         this.postForm.reset();
         this.showToast('Post created successfully.');
@@ -146,7 +139,6 @@ export class Playground {
     const updatedPost = this.postForm.value;
     this.http.put<any>(`https://jsonplaceholder.typicode.com/posts/${id}`, updatedPost).subscribe({
       next: () => {
-        // Update our local list manually since API is fake
         this.posts.set(this.posts().map((p) => (p.id === id ? { ...p, ...updatedPost } : p)));
         this.editingPostId.set(null);
         this.postForm.reset();
@@ -189,7 +181,6 @@ export class Playground {
   }
 
   deletePost(id: number) {
-    // Confirm before deleting for UX safety
     const ok = window.confirm('Are you sure you want to delete this post?');
     if (!ok) return;
 
@@ -218,10 +209,10 @@ export class Playground {
   }
 
   private showToast(message: string) {
-    this.toast.set(message);
     if (this.toastTimeout) {
       window.clearTimeout(this.toastTimeout);
     }
-    this.toastTimeout = window.setTimeout(() => this.toast.set(''), 3200);
+    this.toast.set(message);
+    this.toastTimeout = window.setTimeout(() => this.toast.set(''), 3000);
   }
 }
