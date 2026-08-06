@@ -3,7 +3,7 @@
 /.angular
 
 # Dependency directories
-/node_modules
+/node_modules/
 
 # IDE and editor folders
 /.vscode
