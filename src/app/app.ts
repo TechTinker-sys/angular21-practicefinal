@@ -17,6 +17,7 @@ export class App {
   protected readonly navLinks = [
     { path: '/home', label: 'Home' },
     { path: '/playground', label: 'Playground' },
+    { path: '/notes', label: 'Notes' },
     { path: '/about', label: 'About' }
   ];
 
