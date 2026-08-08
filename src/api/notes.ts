@@ -90,8 +90,8 @@ router.post('/', (req, res) => {
 });
 
 router.get('/', (req, res) => {
-  const page = req.query.page ? Number(req.query.page) : undefined;
-  const limit = req.query.limit ? Number(req.query.limit) : undefined;
+  const page = req.query['page'] ? Number(req.query['page']) : undefined;
+  const limit = req.query['limit'] ? Number(req.query['limit']) : undefined;
 
   if ((page !== undefined && Number.isNaN(page)) || (limit !== undefined && Number.isNaN(limit))) {
     return res.status(400).json({ error: 'page and limit must be numbers' });
