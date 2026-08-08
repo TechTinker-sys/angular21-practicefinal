@@ -4,13 +4,17 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
-import express from 'express';
+import express, { json } from 'express';
 import { join } from 'node:path';
+import { notesRouter } from './api/notes';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
+
+app.use(json());
+app.use('/api/notes', notesRouter);
 
 /**
  * Example Express Rest API endpoints can be defined here.
