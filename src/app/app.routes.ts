@@ -1,6 +1,19 @@
 import { Routes } from '@angular/router';
+import { authGuard, guestGuard } from './features/auth/guards/auth.guard';
 
 export const routes: Routes = [
+  {
+    path: 'login',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./features/auth/pages/login/login').then((m) => m.Login),
+    data: { title: 'Login — Angular21Practice', description: 'Log in to your Angular21Practice account.' }
+  },
+  {
+    path: 'signup',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./features/auth/pages/signup/signup').then((m) => m.Signup),
+    data: { title: 'Sign Up — Angular21Practice', description: 'Create a new Angular21Practice account.' }
+  },
   {
     path: 'home',
     loadComponent: () => import('./features/home/pages/home').then((m) => m.Home),
@@ -18,6 +31,7 @@ export const routes: Routes = [
   },
   {
     path: 'notes',
+    canActivate: [authGuard],
     data: { title: 'Notes — Angular21Practice', description: 'Create, read, update, and delete notes against the Express API.' },
     children: [
       {
