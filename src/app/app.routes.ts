@@ -9,6 +9,18 @@ export const routes: Routes = [
     data: { title: 'Login — Angular21Practice', description: 'Log in to your Angular21Practice account.' }
   },
   {
+    path: 'login/admin',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./features/auth/pages/login/login').then((m) => m.Login),
+    data: { title: 'Admin Login — Angular21Practice', description: 'Log in as an administrator.', role: 'admin' }
+  },
+  {
+    path: 'login/viewer',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./features/auth/pages/login/login').then((m) => m.Login),
+    data: { title: 'Viewer Login — Angular21Practice', description: 'Log in as a viewer.', role: 'viewer' }
+  },
+  {
     path: 'signup',
     canActivate: [guestGuard],
     loadComponent: () => import('./features/auth/pages/signup/signup').then((m) => m.Signup),

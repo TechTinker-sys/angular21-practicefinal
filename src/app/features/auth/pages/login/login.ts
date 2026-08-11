@@ -1,8 +1,10 @@
-import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, computed } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule, NgIf } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+
+type LoginMode = 'all' | 'admin' | 'viewer';
 
 @Component({
   selector: 'app-login',
@@ -14,16 +16,14 @@ import { AuthService } from '../../services/auth.service';
 export class Login {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  protected readonly mode: LoginMode = (this.route.snapshot.data['role'] as LoginMode) ?? 'all';
 
   protected readonly submitting = signal(false);
   protected readonly error = signal('');
 
-  protected readonly loginForm = new FormGroup({
-    email: new FormControl('', [Validators.required, Validators.email]),
-    password: new FormControl('', [Validators.required, Validators.minLength(6)])
-  });
-
-  protected readonly demoAccounts = [
+  private readonly allDemoAccounts = [
     {
       role: 'admin' as const,
       label: 'Admin',
@@ -39,6 +39,34 @@ export class Login {
       password: 'viewer123',
     },
   ];
+
+  protected readonly demoAccounts = computed(() =>
+    this.mode === 'all' ? this.allDemoAccounts : this.allDemoAccounts.filter((a) => a.role === this.mode),
+  );
+
+  protected readonly heading = computed(() => {
+    if (this.mode === 'admin') return 'Admin login';
+    if (this.mode === 'viewer') return 'Viewer login';
+    return 'Welcome back';
+  });
+
+  protected readonly subtitle = computed(() => {
+    if (this.mode === 'admin') return 'Log in with an administrator account to manage notes.';
+    if (this.mode === 'viewer') return 'Log in with a viewer account to browse notes.';
+    return 'Log in to your account to continue.';
+  });
+
+  protected readonly loginForm = new FormGroup({
+    email: new FormControl('', [Validators.required, Validators.email]),
+    password: new FormControl('', [Validators.required, Validators.minLength(6)])
+  });
+
+  constructor() {
+    const demo = this.demoAccounts()[0];
+    if (demo && this.mode !== 'all') {
+      this.fillDemoAccount(demo);
+    }
+  }
 
   protected fillDemoAccount(account: { email: string; password: string }) {
     this.loginForm.patchValue({
