@@ -46,6 +46,46 @@
         }
       </div>
 
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300">Role</label>
+        <div class="mt-2 grid gap-3 sm:grid-cols-2">
+          <label
+            [class.border-sky-500]="signupForm.controls.role.value === 'admin'"
+            [class.bg-sky-50]="signupForm.controls.role.value === 'admin'"
+            [class.dark:bg-sky-950/40]="signupForm.controls.role.value === 'admin'"
+            class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-sky-400 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-sky-500"
+          >
+            <input
+              type="radio"
+              formControlName="role"
+              value="admin"
+              class="mt-0.5 h-4 w-4 shrink-0 accent-sky-600"
+            />
+            <span>
+              <span class="block text-sm font-bold text-slate-900 dark:text-white">Admin</span>
+              <span class="mt-1 block text-xs leading-5 text-slate-600 dark:text-slate-400">Can create, edit, and delete notes</span>
+            </span>
+          </label>
+          <label
+            [class.border-sky-500]="signupForm.controls.role.value === 'viewer'"
+            [class.bg-sky-50]="signupForm.controls.role.value === 'viewer'"
+            [class.dark:bg-sky-950/40]="signupForm.controls.role.value === 'viewer'"
+            class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-sky-400 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-sky-500"
+          >
+            <input
+              type="radio"
+              formControlName="role"
+              value="viewer"
+              class="mt-0.5 h-4 w-4 shrink-0 accent-sky-600"
+            />
+            <span>
+              <span class="block text-sm font-bold text-slate-900 dark:text-white">Viewer</span>
+              <span class="mt-1 block text-xs leading-5 text-slate-600 dark:text-slate-400">Can only view notes</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
       <div *ngIf="error()" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
         {{ error() }}
       </div>

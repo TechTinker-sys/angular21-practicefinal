@@ -3,6 +3,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { CommonModule, NgIf } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { UserRole } from '../../models/auth';
 
 @Component({
   selector: 'app-signup',
@@ -21,7 +22,8 @@ export class Signup {
   protected readonly signupForm = new FormGroup({
     name: new FormControl('', [Validators.required, Validators.minLength(2)]),
     email: new FormControl('', [Validators.required, Validators.email]),
-    password: new FormControl('', [Validators.required, Validators.minLength(6)])
+    password: new FormControl('', [Validators.required, Validators.minLength(6)]),
+    role: new FormControl<UserRole>('viewer', [Validators.required])
   });
 
   protected submitSignup() {
@@ -36,7 +38,8 @@ export class Signup {
     this.authService.signup({
       name: this.signupForm.value.name ?? '',
       email: this.signupForm.value.email ?? '',
-      password: this.signupForm.value.password ?? ''
+      password: this.signupForm.value.password ?? '',
+      role: this.signupForm.value.role ?? 'viewer'
     }).subscribe({
       next: () => this.router.navigate(['/home']),
       error: (err) => {
