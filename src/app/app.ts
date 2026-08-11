@@ -28,6 +28,8 @@ export class App {
 
   protected readonly isAuthenticated = this.authService.isAuthenticated;
   protected readonly currentUser = this.authService.user;
+  protected readonly isAdmin = this.authService.isAdmin;
+  protected readonly isViewer = this.authService.isViewer;
 
   protected readonly isDark = signal(this.getInitialTheme());
   protected readonly mobileMenuOpen = signal(false);

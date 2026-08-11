@@ -3,6 +3,7 @@ import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NotesService } from '../../services/notes.service';
 import { Note } from '../../models/note';
+import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-notes-list',
@@ -13,6 +14,9 @@ import { Note } from '../../models/note';
 })
 export class NotesList {
   private readonly notesService = inject(NotesService);
+  private readonly authService = inject(AuthService);
+
+  protected readonly isAdmin = this.authService.isAdmin;
 
   protected readonly notes = signal<Note[]>([]);
   protected readonly page = signal(1);

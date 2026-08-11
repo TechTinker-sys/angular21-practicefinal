@@ -21,6 +21,8 @@ export class AuthService {
   readonly token = this.tokenSignal.asReadonly();
   readonly user = this.userSignal.asReadonly();
   readonly isAuthenticated = computed(() => this.tokenSignal() !== null);
+  readonly isAdmin = computed(() => this.userSignal()?.role === 'admin');
+  readonly isViewer = computed(() => this.userSignal()?.role === 'viewer');
 
   signup(input: SignupInput): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/signup`, input).pipe(
