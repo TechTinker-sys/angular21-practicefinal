@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard } from './features/auth/guards/auth.guard';
+import { authGuard, guestGuard, adminGuard } from './features/auth/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -41,16 +41,19 @@ export const routes: Routes = [
       },
       {
         path: 'new',
+        canActivate: [adminGuard],
         loadComponent: () => import('./features/notes/pages/note-create/note-create').then((m) => m.NoteCreate),
         data: { title: 'New Note — Angular21Practice', description: 'Create a new note.' }
       },
       {
         path: ':id/edit',
+        canActivate: [adminGuard],
         loadComponent: () => import('./features/notes/pages/note-edit/note-edit').then((m) => m.NoteEdit),
         data: { title: 'Edit Note — Angular21Practice', description: 'Update an existing note.' }
       },
       {
         path: ':id/delete',
+        canActivate: [adminGuard],
         loadComponent: () => import('./features/notes/pages/note-delete/note-delete').then((m) => m.NoteDelete),
         data: { title: 'Delete Note — Angular21Practice', description: 'Delete an existing note.' }
       }

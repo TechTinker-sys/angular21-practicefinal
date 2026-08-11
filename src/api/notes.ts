@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { randomUUID } from 'node:crypto';
+import { authorizeRole } from './auth';
 
 export interface Note {
   id: string;
@@ -79,7 +80,7 @@ function deleteNote(id: string): boolean {
   return notesStore.delete(id);
 }
 
-router.post('/', (req, res) => {
+router.post('/', authorizeRole('admin'), (req, res) => {
   const input = req.body as NoteInput;
   if (!input || (!input.title && !input.content)) {
     return res.status(400).json({ error: 'title or content is required' });
@@ -106,7 +107,7 @@ router.get('/', (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-  const note = getNoteById(req.params.id);
+  const note = getNoteById(req.params['id'] as string);
   if (!note) {
     return res.status(404).json({ error: 'Note not found' });
   }
@@ -114,13 +115,13 @@ router.get('/:id', (req, res) => {
   return res.json(note);
 });
 
-router.put('/:id', (req, res) => {
+router.put('/:id', authorizeRole('admin'), (req, res) => {
   const input = req.body as NoteInput;
   if (!input || (input.title === undefined && input.content === undefined)) {
     return res.status(400).json({ error: 'title or content is required' });
   }
 
-  const updated = updateNote(req.params.id, input);
+  const updated = updateNote(req.params['id'] as string, input);
   if (!updated) {
     return res.status(404).json({ error: 'Note not found' });
   }
@@ -128,8 +129,8 @@ router.put('/:id', (req, res) => {
   return res.json(updated);
 });
 
-router.delete('/:id', (req, res) => {
-  const deleted = deleteNote(req.params.id);
+router.delete('/:id', authorizeRole('admin'), (req, res) => {
+  const deleted = deleteNote(req.params['id'] as string);
   if (!deleted) {
     return res.status(404).json({ error: 'Note not found' });
   }

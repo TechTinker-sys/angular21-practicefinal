@@ -3,11 +3,14 @@ import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+export type UserRole = 'admin' | 'viewer';
+
 export interface User {
   id: string;
   name: string;
   email: string;
   passwordHash: string;
+  role: UserRole;
   createdAt: string;
 }
 
@@ -15,6 +18,7 @@ export interface PublicUser {
   id: string;
   name: string;
   email: string;
+  role: UserRole;
   createdAt: string;
 }
 
@@ -42,13 +46,14 @@ function toPublicUser(user: User): PublicUser {
     id: user.id,
     name: user.name,
     email: user.email,
+    role: user.role,
     createdAt: user.createdAt,
   };
 }
 
 function signToken(user: User): string {
   return jwt.sign(
-    { sub: user.id, email: user.email, name: user.name },
+    { sub: user.id, email: user.email, name: user.name, role: user.role },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN },
   );
@@ -65,6 +70,21 @@ function getUserByEmail(email: string): User | undefined {
 
 function getUserById(id: string): User | undefined {
   return usersStore.get(id);
+}
+
+export function authorizeRole(...roles: UserRole[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const user = (req as Request & { user?: PublicUser }).user;
+    if (!user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    if (!roles.includes(user.role)) {
+      return res.status(403).json({ error: 'You do not have permission to perform this action' });
+    }
+
+    return next();
+  };
 }
 
 export function authenticateToken(req: Request, res: Response, next: NextFunction) {
@@ -98,6 +118,8 @@ router.post('/signup', async (req, res) => {
   const name = input?.name?.trim();
   const email = input?.email?.trim().toLowerCase();
   const password = input?.password;
+  // New signups always default to viewer role for safety.
+  const role: UserRole = 'viewer';
 
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'name, email, and password are required' });
@@ -125,6 +147,7 @@ router.post('/signup', async (req, res) => {
     name,
     email,
     passwordHash,
+    role,
     createdAt: new Date().toISOString(),
   };
 
@@ -172,5 +195,40 @@ router.get('/me', authenticateToken, (req, res) => {
   const user = (req as Request & { user?: PublicUser }).user;
   return res.json({ user });
 });
+
+// Seed default admin and viewer accounts so both logins are available out of the box.
+async function seedUsers() {
+  if (usersStore.size > 0) {
+    return;
+  }
+
+  const now = new Date().toISOString();
+
+  const adminHash = await bcrypt.hash('admin123', 10);
+  const viewerHash = await bcrypt.hash('viewer123', 10);
+
+  const admin: User = {
+    id: randomUUID(),
+    name: 'Admin',
+    email: 'admin@example.com',
+    passwordHash: adminHash,
+    role: 'admin',
+    createdAt: now,
+  };
+
+  const viewer: User = {
+    id: randomUUID(),
+    name: 'Viewer',
+    email: 'viewer@example.com',
+    passwordHash: viewerHash,
+    role: 'viewer',
+    createdAt: now,
+  };
+
+  usersStore.set(admin.id, admin);
+  usersStore.set(viewer.id, viewer);
+}
+
+void seedUsers();
 
 export { router as authRouter, usersStore, tokenBlacklist, toPublicUser, signToken, getUserByEmail, getUserById };

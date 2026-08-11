@@ -7,12 +7,14 @@
           <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-4xl">All notes</h1>
           <p class="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">Browse, edit, and delete notes from the Express API.</p>
         </div>
-        <a
-          routerLink="/notes/new"
-          class="inline-flex items-center gap-2 rounded-full bg-sky-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-700"
-        >
-          + New note
-        </a>
+        @if (isAdmin()) {
+          <a
+            routerLink="/notes/new"
+            class="inline-flex items-center gap-2 rounded-full bg-sky-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-700"
+          >
+            + New note
+          </a>
+        }
       </div>
 
       <div class="mt-6 flex flex-wrap items-center gap-3">
@@ -40,6 +42,7 @@
               <h3 class="text-base font-semibold text-slate-950 dark:text-white">{{ note.title }}</h3>
               <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{{ note.content }}</p>
             </div>
+            @if (isAdmin()) {
             <div class="flex gap-2">
               <a
                 [routerLink]="['/notes', note.id, 'edit']"
@@ -54,6 +57,7 @@
                 Delete
               </a>
             </div>
+            }
           </div>
           <p class="mt-4 text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Updated: {{ note.updatedAt }}</p>
         </div>

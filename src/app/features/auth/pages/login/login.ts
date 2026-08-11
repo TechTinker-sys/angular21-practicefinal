@@ -23,6 +23,30 @@ export class Login {
     password: new FormControl('', [Validators.required, Validators.minLength(6)])
   });
 
+  protected readonly demoAccounts = [
+    {
+      role: 'admin' as const,
+      label: 'Admin',
+      description: 'Can create, edit, and delete notes',
+      email: 'admin@example.com',
+      password: 'admin123',
+    },
+    {
+      role: 'viewer' as const,
+      label: 'Viewer',
+      description: 'Can only view notes',
+      email: 'viewer@example.com',
+      password: 'viewer123',
+    },
+  ];
+
+  protected fillDemoAccount(account: { email: string; password: string }) {
+    this.loginForm.patchValue({
+      email: account.email,
+      password: account.password,
+    });
+  }
+
   protected submitLogin() {
     if (this.loginForm.invalid) {
       this.error.set('Please fill in all fields correctly.');
