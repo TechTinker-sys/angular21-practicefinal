@@ -26,6 +26,7 @@ interface SignupInput {
   name?: string;
   email?: string;
   password?: string;
+  role?: UserRole;
 }
 
 interface LoginInput {
@@ -118,8 +119,9 @@ router.post('/signup', async (req, res) => {
   const name = input?.name?.trim();
   const email = input?.email?.trim().toLowerCase();
   const password = input?.password;
-  // New signups always default to viewer role for safety.
-  const role: UserRole = 'viewer';
+  // Allow explicit role selection, default to viewer for safety.
+  const requestedRole = input?.role;
+  const role: UserRole = requestedRole === 'admin' || requestedRole === 'viewer' ? requestedRole : 'viewer';
 
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'name, email, and password are required' });
