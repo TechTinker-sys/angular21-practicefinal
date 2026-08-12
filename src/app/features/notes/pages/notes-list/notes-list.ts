@@ -41,7 +41,10 @@ export class NotesList {
         this.page.set(result.page ?? page);
         this.limit.set(result.limit ?? limit);
       },
-      error: () => this.error.set('Unable to load notes.'),
+      error: () => {
+        this.error.set('Unable to load notes.');
+        this.loading.set(false);
+      },
       complete: () => this.loading.set(false),
     });
   }

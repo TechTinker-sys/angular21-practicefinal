@@ -51,7 +51,10 @@ export class NoteDelete {
     this.deleting.set(true);
     this.error.set('');
     this.notesService.deleteNote(id).subscribe({
-      next: () => this.router.navigate(['/notes']),
+      next: () => {
+        this.deleting.set(false);
+        this.router.navigate(['/notes']);
+      },
       error: () => {
         this.error.set('Unable to delete note.');
         this.deleting.set(false);

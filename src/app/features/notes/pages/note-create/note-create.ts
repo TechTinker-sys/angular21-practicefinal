@@ -35,7 +35,10 @@ export class NoteCreate {
       title: this.noteForm.value.title ?? '',
       content: this.noteForm.value.content ?? ''
     }).subscribe({
-      next: () => this.router.navigate(['/notes']),
+      next: () => {
+        this.submitting.set(false);
+        this.router.navigate(['/notes']);
+      },
       error: () => {
         this.error.set('Unable to create note.');
         this.submitting.set(false);

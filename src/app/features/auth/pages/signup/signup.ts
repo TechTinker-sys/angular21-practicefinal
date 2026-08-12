@@ -41,7 +41,10 @@ export class Signup {
       password: this.signupForm.value.password ?? '',
       role: this.signupForm.value.role ?? 'viewer'
     }).subscribe({
-      next: () => this.router.navigate(['/home']),
+      next: () => {
+        this.submitting.set(false);
+        this.router.navigate(['/home']);
+      },
       error: (err) => {
         this.error.set(err.error?.error || 'Unable to create account.');
         this.submitting.set(false);
