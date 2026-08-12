@@ -88,7 +88,10 @@ export class Login {
       email: this.loginForm.value.email ?? '',
       password: this.loginForm.value.password ?? ''
     }).subscribe({
-      next: () => this.router.navigate(['/home']),
+      next: () => {
+        this.submitting.set(false);
+        this.router.navigate(['/home']);
+      },
       error: (err) => {
         this.error.set(err.error?.error || 'Unable to log in.');
         this.submitting.set(false);

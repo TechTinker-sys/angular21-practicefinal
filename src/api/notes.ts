@@ -138,4 +138,4 @@ router.delete('/:id', authorizeRole('admin'), (req, res) => {
   return res.status(204).send();
 });
 
-export { router as notesRouter, createNote, getNoteById, getAllNotes, updateNote, deleteNote };
+export { router as notesRouter, createNote, getNoteById, getAllNotes, updateNote, deleteNote, notesStore };
