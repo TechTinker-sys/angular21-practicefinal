@@ -15,6 +15,9 @@ describe('NoteCreate', () => {
     id: 'note-1',
     title: 'New note',
     content: 'New content',
+    authorId: 'user-1',
+    authorName: 'Admin',
+    approved: true,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   };

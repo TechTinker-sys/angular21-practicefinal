@@ -288,7 +288,7 @@ describe('Auth API', () => {
       expect(res.body.title).toBe('Admin note');
     });
 
-    it('should deny viewer access to admin-only routes', async () => {
+    it('should allow viewer to create notes with pending approval', async () => {
       const { token } = await signupUser(app, {
         name: 'Viewer Role',
         email: 'viewer-role@example.com',
@@ -299,10 +299,11 @@ describe('Auth API', () => {
       const res = await request(app)
         .post('/api/notes')
         .set(authHeader(token))
-        .send({ title: 'Viewer note', content: 'Should fail' })
-        .expect(403);
+        .send({ title: 'Viewer note', content: 'Needs approval' })
+        .expect(201);
 
-      expect(res.body.error).toBe('You do not have permission to perform this action');
+      expect(res.body.title).toBe('Viewer note');
+      expect(res.body.approved).toBe(false);
     });
 
     it('should return 401 when no user is attached', async () => {

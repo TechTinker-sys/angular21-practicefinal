@@ -12,6 +12,9 @@ describe('NotesService', () => {
     id: 'note-1',
     title: 'Test note',
     content: 'Test content',
+    authorId: 'user-1',
+    authorName: 'Admin',
+    approved: true,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   };
@@ -104,6 +107,18 @@ describe('NotesService', () => {
       const req = httpMock.expectOne('/api/notes/note-1');
       expect(req.request.method).toBe('DELETE');
       req.flush(null);
+    });
+  });
+
+  describe('approveNote', () => {
+    it('should PUT to approve a note', () => {
+      service.approveNote('note-1').subscribe((note) => {
+        expect(note).toEqual({ ...mockNote, approved: true });
+      });
+
+      const req = httpMock.expectOne('/api/notes/note-1/approve');
+      expect(req.request.method).toBe('PUT');
+      req.flush({ ...mockNote, approved: true });
     });
   });
 });

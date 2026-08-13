@@ -53,19 +53,19 @@ export const routes: Routes = [
       },
       {
         path: 'new',
-        canActivate: [adminGuard],
+        canActivate: [authGuard],
         loadComponent: () => import('./features/notes/pages/note-create/note-create').then((m) => m.NoteCreate),
         data: { title: 'New Note — Angular21Practice', description: 'Create a new note.' }
       },
       {
         path: ':id/edit',
-        canActivate: [adminGuard],
+        canActivate: [authGuard],
         loadComponent: () => import('./features/notes/pages/note-edit/note-edit').then((m) => m.NoteEdit),
         data: { title: 'Edit Note — Angular21Practice', description: 'Update an existing note.' }
       },
       {
         path: ':id/delete',
-        canActivate: [adminGuard],
+        canActivate: [authGuard],
         loadComponent: () => import('./features/notes/pages/note-delete/note-delete').then((m) => m.NoteDelete),
         data: { title: 'Delete Note — Angular21Practice', description: 'Delete an existing note.' }
       }
