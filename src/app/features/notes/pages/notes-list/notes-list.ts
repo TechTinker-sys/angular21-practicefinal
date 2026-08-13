@@ -17,6 +17,7 @@ export class NotesList {
   private readonly authService = inject(AuthService);
 
   protected readonly isAdmin = this.authService.isAdmin;
+  protected readonly currentUser = this.authService.user;
 
   protected readonly notes = signal<Note[]>([]);
   protected readonly page = signal(1);
@@ -24,6 +25,7 @@ export class NotesList {
   protected readonly total = signal(0);
   protected readonly loading = signal(false);
   protected readonly error = signal('');
+  protected readonly approving = signal<string | null>(null);
 
   protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.total() / this.limit())));
 
@@ -46,6 +48,24 @@ export class NotesList {
         this.loading.set(false);
       },
       complete: () => this.loading.set(false),
+    });
+  }
+
+  protected canModify(note: Note): boolean {
+    return this.isAdmin() || note.authorId === this.currentUser()?.id;
+  }
+
+  protected approve(note: Note) {
+    this.approving.set(note.id);
+    this.notesService.approveNote(note.id).subscribe({
+      next: (updated) => {
+        this.notes.update((notes) => notes.map((n) => (n.id === updated.id ? updated : n)));
+        this.approving.set(null);
+      },
+      error: () => {
+        this.error.set('Unable to approve note.');
+        this.approving.set(null);
+      },
     });
   }
 

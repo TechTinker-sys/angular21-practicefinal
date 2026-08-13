@@ -11,22 +11,29 @@ describe('NotesList', () => {
   let component: NotesList;
   let httpMock: HttpTestingController;
 
-  const mockNotes: Note[] = [
-    {
-      id: 'note-1',
-      title: 'First note',
-      content: 'First content',
-      createdAt: '2026-01-01T00:00:00.000Z',
-      updatedAt: '2026-01-01T00:00:00.000Z',
-    },
-    {
-      id: 'note-2',
-      title: 'Second note',
-      content: 'Second content',
-      createdAt: '2026-01-02T00:00:00.000Z',
-      updatedAt: '2026-01-02T00:00:00.000Z',
-    },
-  ];
+  const mockAdminNote: Note = {
+    id: 'note-1',
+    title: 'First note',
+    content: 'First content',
+    authorId: 'user-1',
+    authorName: 'Admin',
+    approved: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  };
+
+  const mockViewerNote: Note = {
+    id: 'note-2',
+    title: 'Second note',
+    content: 'Second content',
+    authorId: 'user-2',
+    authorName: 'Viewer',
+    approved: false,
+    createdAt: '2026-01-02T00:00:00.000Z',
+    updatedAt: '2026-01-02T00:00:00.000Z',
+  };
+
+  const mockNotes: Note[] = [mockAdminNote, mockViewerNote];
 
   const mockAdmin: User = {
     id: 'user-1',
@@ -176,7 +183,7 @@ describe('NotesList', () => {
     expect(component['totalPages']()).toBe(3);
   });
 
-  it('should show admin actions for admin users', () => {
+  it('should show new note button for admin users', () => {
     setup(mockAdmin);
     fixture.detectChanges();
 
@@ -188,7 +195,7 @@ describe('NotesList', () => {
     expect(compiled.querySelector('a[routerLink="/notes/new"]')).toBeTruthy();
   });
 
-  it('should hide admin actions for viewer users', () => {
+  it('should show new note button for viewer users', () => {
     setup(mockViewer);
     fixture.detectChanges();
 
@@ -197,6 +204,83 @@ describe('NotesList', () => {
 
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('a[routerLink="/notes/new"]')).toBeFalsy();
+    expect(compiled.querySelector('a[routerLink="/notes/new"]')).toBeTruthy();
+  });
+
+  it('should show approve button for admin on pending notes', () => {
+    setup(mockAdmin);
+    fixture.detectChanges();
+
+    const req = httpMock.expectOne('/api/notes?page=1&limit=5');
+    req.flush({ notes: mockNotes, total: 2, page: 1, limit: 5 });
+
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const approveButtons = Array.from(compiled.querySelectorAll('button'))
+      .filter((btn) => btn.textContent?.trim() === 'Approve');
+    expect(approveButtons.length).toBe(1); // Only one pending note (mockViewerNote)
+  });
+
+  it('should not show approve button for viewer users', () => {
+    setup(mockViewer);
+    fixture.detectChanges();
+
+    const req = httpMock.expectOne('/api/notes?page=1&limit=5');
+    req.flush({ notes: mockNotes, total: 2, page: 1, limit: 5 });
+
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const approveButtons = Array.from(compiled.querySelectorAll('button'))
+      .filter((btn) => btn.textContent?.trim() === 'Approve');
+    expect(approveButtons.length).toBe(0);
+  });
+
+  it('should allow viewer to edit and delete their own pending note', () => {
+    setup(mockViewer);
+    fixture.detectChanges();
+
+    const req = httpMock.expectOne('/api/notes?page=1&limit=5');
+    req.flush({ notes: [mockViewerNote], total: 1, page: 1, limit: 5 });
+
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    // Edit and Delete links for own note (match by text content since routerLink attributes vary)
+    const editLinks = Array.from(compiled.querySelectorAll('a'))
+      .filter((a) => a.textContent?.trim() === 'Edit');
+    const deleteLinks = Array.from(compiled.querySelectorAll('a'))
+      .filter((a) => a.textContent?.trim() === 'Delete');
+    expect(editLinks.length).toBe(1);
+    expect(deleteLinks.length).toBe(1);
+  });
+
+  it('should not allow viewer to edit or delete admin note', () => {
+    // Viewer's id is user-2; admin note authored by user-1
+    setup(mockViewer);
+    fixture.detectChanges();
+
+    const req = httpMock.expectOne('/api/notes?page=1&limit=5');
+    req.flush({ notes: [mockAdminNote], total: 1, page: 1, limit: 5 });
+
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('a[routerLink="/notes/note-1/edit"]')).toBeFalsy();
+    expect(compiled.querySelector('a[routerLink="/notes/note-1/delete"]')).toBeFalsy();
+  });
+
+  it('should approve a pending note as admin', () => {
+    setup(mockAdmin);
+    fixture.detectChanges();
+
+    const req = httpMock.expectOne('/api/notes?page=1&limit=5');
+    req.flush({ notes: [mockViewerNote], total: 1, page: 1, limit: 5 });
+
+    (component as any).approve(mockViewerNote);
+
+    const approveReq = httpMock.expectOne('/api/notes/note-2/approve');
+    expect(approveReq.request.method).toBe('PUT');
+    approveReq.flush({ ...mockViewerNote, approved: true });
+
+    expect(component['notes']()[0].approved).toBe(true);
+    expect(component['approving']()).toBeNull();
   });
 });

@@ -27,4 +27,8 @@ export class NotesService {
   deleteNote(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  approveNote(id: string): Observable<Note> {
+    return this.http.put<Note>(`${this.apiUrl}/${id}/approve`, {});
+  }
 }
