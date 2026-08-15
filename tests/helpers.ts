@@ -2,12 +2,14 @@ import express, { Express, json } from 'express';
 import request from 'supertest';
 import { authRouter, usersStore, tokenBlacklist, authenticateToken } from '../src/api/auth';
 import { notesRouter, notesStore } from '../src/api/notes';
+import { notificationsRouter, notificationsStore } from '../src/api/notifications';
 
 export function createTestApp(): Express {
   const app = express();
   app.use(json());
   app.use('/api/auth', authRouter);
   app.use('/api/notes', authenticateToken, notesRouter);
+  app.use('/api/notifications', authenticateToken, notificationsRouter);
   return app;
 }
 
@@ -15,6 +17,7 @@ export async function resetStores(): Promise<void> {
   usersStore.clear();
   tokenBlacklist.clear();
   notesStore.clear();
+  notificationsStore.clear();
   // The seedUsers() call ran at module load; clearing gives tests a clean slate.
 }
 

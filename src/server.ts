@@ -8,6 +8,7 @@ import express, { json } from 'express';
 import { join } from 'node:path';
 import { notesRouter } from './api/notes';
 import { authRouter, authenticateToken } from './api/auth';
+import { notificationsRouter } from './api/notifications';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -17,6 +18,7 @@ const angularApp = new AngularNodeAppEngine();
 app.use(json());
 app.use('/api/notes', authenticateToken, notesRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/notifications', authenticateToken, notificationsRouter);
 
 /**
  * Example Express Rest API endpoints can be defined here.

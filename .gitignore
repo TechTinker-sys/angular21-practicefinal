@@ -13,6 +13,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 server.out.log
+server-out.log
+server-err.log
 
 # Misc
 .DS_Store

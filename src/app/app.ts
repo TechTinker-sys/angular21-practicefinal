@@ -3,11 +3,12 @@ import { isPlatformBrowser } from '@angular/common';
 import { Router, NavigationStart, NavigationEnd, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { Title, Meta } from '@angular/platform-browser';
 import { AuthService } from './features/auth/services/auth.service';
+import { NotificationBell } from './features/notifications/components/notification-bell/notification-bell';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationBell],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
