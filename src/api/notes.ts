@@ -1,6 +1,7 @@
 import { Router, Request } from 'express';
 import { randomUUID } from 'node:crypto';
 import type { PublicUser } from './auth';
+import { notifyAllAdmins, notifyUser } from './notifications';
 
 export interface Note {
   id: string;
@@ -41,6 +42,16 @@ function createNote(input: NoteInput, user: PublicUser): Note {
   };
 
   notesStore.set(note.id, note);
+
+  // Notify all admins when a viewer creates a note that requires approval.
+  if (user.role !== 'admin') {
+    notifyAllAdmins(
+      'note_created',
+      `${note.authorName} submitted a new note titled “${note.title}” for approval.`,
+      note.id,
+    );
+  }
+
   return note;
 }
 
@@ -209,6 +220,16 @@ router.put('/:id/approve', (req, res) => {
     updatedAt: new Date().toISOString(),
   };
   notesStore.set(note.id, approvedNote);
+
+  // Notify the note author when an admin approves their note.
+  if (note.authorId !== user.id) {
+    notifyUser(
+      note.authorId,
+      'note_approved',
+      `Your note titled “${note.title}” was approved by ${user.name}.`,
+      note.id,
+    );
+  }
 
   return res.json(approvedNote);
 });

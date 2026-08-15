@@ -60,6 +60,10 @@
           </a>
         }
 
+        @if (isAuthenticated()) {
+          <app-notification-bell></app-notification-bell>
+        }
+
         <button
           type="button"
           (click)="toggleTheme()"
