@@ -67,9 +67,7 @@ export class AuthService {
       try {
         localStorage.setItem(TOKEN_KEY, response.token);
         localStorage.setItem(USER_KEY, JSON.stringify(response.user));
-      } catch {
-        /* localStorage unavailable — safe to ignore */
-      }
+      } catch {}
     }
   }
 
@@ -80,9 +78,7 @@ export class AuthService {
       try {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
-      } catch {
-        /* localStorage unavailable — safe to ignore */
-      }
+      } catch {}
     }
   }
 

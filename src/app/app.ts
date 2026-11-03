@@ -39,7 +39,6 @@ export class App {
       if (event instanceof NavigationStart) {
         this.routeTransition.set(false);
       } else if (event instanceof NavigationEnd) {
-        // Set title and meta description based on deepest activated route data
         const root = this.router.routerState.root;
         let route = root;
         while (route.firstChild) {
@@ -68,9 +67,7 @@ export class App {
       document.documentElement.classList.toggle('dark', dark);
       try {
         localStorage.setItem('theme', dark ? 'dark' : 'light');
-      } catch {
-        /* localStorage unavailable — safe to ignore */
-      }
+      } catch {}
     });
   }
 
@@ -79,9 +76,7 @@ export class App {
     try {
       const saved = localStorage.getItem('theme');
       if (saved) return saved === 'dark';
-    } catch {
-      /* ignore */
-    }
+    } catch {}
     return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? true;
   }
 

@@ -1,18 +1,10 @@
+import { createHash } from 'node:crypto';
 import { Router, Request, Response, NextFunction } from 'express';
-import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-
-export type UserRole = 'admin' | 'viewer';
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  passwordHash: string;
-  role: UserRole;
-  createdAt: string;
-}
+import { UniqueConstraintError, fn, col, where } from 'sequelize';
+import { RevokedToken } from './models/RevokedToken';
+import { User, UserRole } from './models/User';
 
 export interface PublicUser {
   id: string;
@@ -34,25 +26,22 @@ interface LoginInput {
   password?: string;
 }
 
-const usersStore = new Map<string, User>();
-const tokenBlacklist = new Set<string>();
-
 const JWT_SECRET = process.env['JWT_SECRET'] || 'dev-secret-change-me-in-production';
 const JWT_EXPIRES_IN = '1h';
 
 const router = Router();
 
-function toPublicUser(user: User): PublicUser {
+export function toPublicUser(user: User): PublicUser {
   return {
     id: user.id,
     name: user.name,
     email: user.email,
     role: user.role,
-    createdAt: user.createdAt,
+    createdAt: user.createdAt.toISOString(),
   };
 }
 
-function signToken(user: User): string {
+export function signToken(user: User): string {
   return jwt.sign(
     { sub: user.id, email: user.email, name: user.name, role: user.role },
     JWT_SECRET,
@@ -60,58 +49,69 @@ function signToken(user: User): string {
   );
 }
 
-function getUserByEmail(email: string): User | undefined {
-  for (const user of usersStore.values()) {
-    if (user.email.toLowerCase() === email.toLowerCase()) {
-      return user;
-    }
-  }
-  return undefined;
+function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
 }
 
-function getUserById(id: string): User | undefined {
-  return usersStore.get(id);
+async function getUserByEmail(email: string): Promise<User | null> {
+  return User.findOne({
+    where: where(fn('LOWER', col('email')), email.toLowerCase()),
+  });
 }
 
 export function authorizeRole(...roles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = (req as Request & { user?: PublicUser }).user;
     if (!user) {
-      return res.status(401).json({ error: 'Authentication required' });
+      res.status(401).json({ error: 'Authentication required' });
+      return;
     }
 
     if (!roles.includes(user.role)) {
-      return res.status(403).json({ error: 'You do not have permission to perform this action' });
+      res.status(403).json({ error: 'You do not have permission to perform this action' });
+      return;
     }
 
-    return next();
+    next();
   };
 }
 
-export function authenticateToken(req: Request, res: Response, next: NextFunction) {
+export async function authenticateToken(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
 
   if (!token) {
-    return res.status(401).json({ error: 'Authentication required' });
+    res.status(401).json({ error: 'Authentication required' });
+    return;
   }
 
-  if (tokenBlacklist.has(token)) {
-    return res.status(401).json({ error: 'Token has been revoked' });
-  }
-
+  let payload: string | jwt.JwtPayload;
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
-    const user = getUserById(payload.sub as string);
-    if (!user) {
-      return res.status(401).json({ error: 'User no longer exists' });
-    }
-
-    (req as Request & { user?: PublicUser }).user = toPublicUser(user);
-    return next();
+    payload = jwt.verify(token, JWT_SECRET);
   } catch {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    res.status(401).json({ error: 'Invalid or expired token' });
+    return;
   }
+
+  if (typeof payload !== 'object' || typeof payload.sub !== 'string') {
+    res.status(401).json({ error: 'Invalid or expired token' });
+    return;
+  }
+
+  const revokedToken = await RevokedToken.findByPk(hashToken(token));
+  if (revokedToken) {
+    res.status(401).json({ error: 'Token has been revoked' });
+    return;
+  }
+
+  const user = await User.findByPk(payload.sub);
+  if (!user) {
+    res.status(401).json({ error: 'User no longer exists' });
+    return;
+  }
+
+  (req as Request & { user?: PublicUser }).user = toPublicUser(user);
+  next();
 }
 
 router.post('/signup', async (req, res) => {
@@ -119,7 +119,6 @@ router.post('/signup', async (req, res) => {
   const name = input?.name?.trim();
   const email = input?.email?.trim().toLowerCase();
   const password = input?.password;
-  // Allow explicit role selection, default to viewer for safety.
   const requestedRole = input?.role;
   const role: UserRole = requestedRole === 'admin' || requestedRole === 'viewer' ? requestedRole : 'viewer';
 
@@ -139,24 +138,21 @@ router.post('/signup', async (req, res) => {
     return res.status(400).json({ error: 'password must be at least 6 characters' });
   }
 
-  if (getUserByEmail(email)) {
+  if (await getUserByEmail(email)) {
     return res.status(409).json({ error: 'An account with this email already exists' });
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const user: User = {
-    id: randomUUID(),
-    name,
-    email,
-    passwordHash,
-    role,
-    createdAt: new Date().toISOString(),
-  };
-
-  usersStore.set(user.id, user);
-
-  const token = signToken(user);
-  return res.status(201).json({ user: toPublicUser(user), token });
+  try {
+    const user = await User.create({ name, email, passwordHash, role });
+    const token = signToken(user);
+    return res.status(201).json({ user: toPublicUser(user), token });
+  } catch (error) {
+    if (error instanceof UniqueConstraintError) {
+      return res.status(409).json({ error: 'An account with this email already exists' });
+    }
+    throw error;
+  }
 });
 
 router.post('/login', async (req, res) => {
@@ -168,7 +164,7 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ error: 'email and password are required' });
   }
 
-  const user = getUserByEmail(email);
+  const user = await getUserByEmail(email);
   if (!user) {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
@@ -182,12 +178,15 @@ router.post('/login', async (req, res) => {
   return res.json({ user: toPublicUser(user), token });
 });
 
-router.post('/logout', authenticateToken, (req, res) => {
+router.post('/logout', authenticateToken, async (req, res) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
 
   if (token) {
-    tokenBlacklist.add(token);
+    await RevokedToken.findOrCreate({
+      where: { tokenHash: hashToken(token) },
+      defaults: { tokenHash: hashToken(token) },
+    });
   }
 
   return res.status(204).send();
@@ -198,39 +197,4 @@ router.get('/me', authenticateToken, (req, res) => {
   return res.json({ user });
 });
 
-// Seed default admin and viewer accounts so both logins are available out of the box.
-async function seedUsers() {
-  if (usersStore.size > 0) {
-    return;
-  }
-
-  const now = new Date().toISOString();
-
-  const adminHash = await bcrypt.hash('admin123', 10);
-  const viewerHash = await bcrypt.hash('viewer123', 10);
-
-  const admin: User = {
-    id: randomUUID(),
-    name: 'Admin',
-    email: 'admin@example.com',
-    passwordHash: adminHash,
-    role: 'admin',
-    createdAt: now,
-  };
-
-  const viewer: User = {
-    id: randomUUID(),
-    name: 'Viewer',
-    email: 'viewer@example.com',
-    passwordHash: viewerHash,
-    role: 'viewer',
-    createdAt: now,
-  };
-
-  usersStore.set(admin.id, admin);
-  usersStore.set(viewer.id, viewer);
-}
-
-void seedUsers();
-
-export { router as authRouter, usersStore, tokenBlacklist, toPublicUser, signToken, getUserByEmail, getUserById };
+export { router as authRouter, getUserByEmail };

@@ -1,13 +1,3 @@
-# Test script for the notes API
-# Usage:
-# 1. Open PowerShell in the repo root.
-# 2. Run the server in one terminal:
-#    npm install
-#    npm run build
-#    npm run serve:ssr:angular21-practice
-# 3. Run this script in a second terminal:
-#    .\test-notes-api.ps1
-
 $baseUrl = 'http://localhost:4000/api'
 $authUrl = "$baseUrl/auth"
 $notesUrl = "$baseUrl/notes"

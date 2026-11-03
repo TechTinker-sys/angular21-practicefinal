@@ -1,44 +1,150 @@
 import express from 'express';
 import request from 'supertest';
-import { authRouter, authenticateToken, tokenBlacklist, usersStore } from '../src/api/auth';
+import { randomUUID } from 'node:crypto';
+import bcrypt from 'bcryptjs';
+import { authRouter, authenticateToken } from '../src/api/auth';
+import { Note } from '../src/api/models/Note';
+import { RevokedToken } from '../src/api/models/RevokedToken';
+import { User } from '../src/api/models/User';
 import { notesRouter } from '../src/api/notes';
+
+jest.mock('../src/api/models/User', () => ({
+  User: {
+    create: jest.fn(),
+    findByPk: jest.fn(),
+    findOne: jest.fn(),
+  },
+}));
+
+jest.mock('../src/api/models/Note', () => ({
+  Note: {
+    create: jest.fn(),
+    destroy: jest.fn(),
+    findAll: jest.fn(),
+    findAndCountAll: jest.fn(),
+    findByPk: jest.fn(),
+  },
+}));
+
+jest.mock('../src/api/models/RevokedToken', () => ({
+  RevokedToken: {
+    findByPk: jest.fn(),
+    findOrCreate: jest.fn(),
+  },
+}));
 
 const app = express();
 app.use(express.json());
 app.use('/api/auth', authRouter);
 app.use('/api/notes', authenticateToken, notesRouter);
 
-let emailSequence = 0;
-const createdUserIds: string[] = [];
+const users = new Map<string, User>();
+const notes = new Map<string, Note>();
+
+function makeUser(name: string, email: string, role: 'admin' | 'viewer'): User {
+  const now = new Date();
+  return {
+    id: randomUUID(),
+    name,
+    email,
+    passwordHash: bcrypt.hashSync('secure-password', 10),
+    role,
+    createdAt: now,
+    updatedAt: now,
+  } as User;
+}
+
+function makeNote(title: string, content: string): Note {
+  const now = new Date();
+  const note = {
+    id: randomUUID(),
+    title,
+    content,
+    createdAt: now,
+    updatedAt: now,
+  };
+  return Object.assign(note, {
+    update: jest.fn(async (values: { title?: string; content?: string }) => {
+      if (values.title !== undefined) {
+        note.title = values.title;
+      }
+      if (values.content !== undefined) {
+        note.content = values.content;
+      }
+      note.updatedAt = new Date();
+      return note;
+    }),
+  }) as unknown as Note;
+}
+
+beforeEach(() => {
+  users.clear();
+  notes.clear();
+  jest.clearAllMocks();
+
+  jest.mocked(User.findOne).mockResolvedValue(null);
+  jest.mocked(User.findByPk).mockImplementation(async (id) => users.get(String(id)) ?? null);
+  jest.mocked(User.create).mockImplementation(async (input) => {
+    const user = makeUser(input.name, input.email, input.role);
+    user.passwordHash = input.passwordHash;
+    users.set(user.id, user);
+    return user;
+  });
+
+  jest.mocked(RevokedToken.findByPk).mockResolvedValue(null);
+  jest.mocked(RevokedToken.findOrCreate).mockResolvedValue([{} as never, true]);
+
+  jest.mocked(Note.create).mockImplementation(async (input) => {
+    const note = makeNote(input.title, input.content);
+    notes.set(note.id, note);
+    return note;
+  });
+  jest.mocked(Note.findByPk).mockImplementation(async (id) => notes.get(String(id)) ?? null);
+  jest.mocked(Note.findAll).mockImplementation(async () =>
+    Array.from(notes.values()).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
+  );
+  jest.mocked(Note.findAndCountAll).mockImplementation(async (options) => {
+    const allNotes = Array.from(notes.values()).sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+    );
+    return {
+      rows: allNotes.slice(options.offset ?? 0, (options.offset ?? 0) + (options.limit ?? 0)),
+      count: allNotes.length,
+    } as never;
+  });
+  jest.mocked(Note.destroy).mockImplementation(async (options) => {
+    const id = String((options.where as { id?: string }).id);
+    return notes.delete(id) ? 1 : 0;
+  });
+});
 
 async function createUser(role: 'admin' | 'viewer') {
-  emailSequence += 1;
+  const email = `${role}-${randomUUID()}@example.test`;
+  const user = makeUser(`${role} user`, email, role);
+  jest.mocked(User.findOne).mockResolvedValueOnce(null);
+  jest.mocked(User.create).mockResolvedValueOnce(user);
+
   const response = await request(app)
     .post('/api/auth/signup')
     .send({
-      name: `${role} user`,
-      email: `${role}-${emailSequence}@example.test`,
+      name: user.name,
+      email,
       password: 'secure-password',
       role,
     })
     .expect(201);
 
-  createdUserIds.push(response.body.user.id);
+  users.set(user.id, user);
   return response.body as { user: { id: string; role: string }; token: string };
 }
-
-afterEach(() => {
-  tokenBlacklist.clear();
-  for (const id of createdUserIds.splice(0)) {
-    usersStore.delete(id);
-  }
-});
 
 describe('authentication', () => {
   it('logs in with the correct password and rejects a wrong password', async () => {
     const user = await createUser('admin');
-    const email = `admin-${emailSequence}@example.test`;
+    const storedUser = users.get(user.user.id)!;
+    const email = storedUser.email;
 
+    jest.mocked(User.findOne).mockResolvedValueOnce(storedUser);
     await request(app)
       .post('/api/auth/login')
       .send({ email, password: 'secure-password' })
@@ -48,6 +154,7 @@ describe('authentication', () => {
         expect(response.body.user.id).toBe(user.user.id);
       });
 
+    jest.mocked(User.findOne).mockResolvedValueOnce(storedUser);
     await request(app)
       .post('/api/auth/login')
       .send({ email, password: 'incorrect-password' })
@@ -126,7 +233,7 @@ describe('request errors', () => {
 
     await request(app)
       .get('/api/notes')
-      .set('Authorization', 'Bearer not-a-valid-token')
+      .set('Authorization', 'Bearer invalid-token')
       .expect(401);
   });
 

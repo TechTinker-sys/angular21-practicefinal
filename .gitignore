@@ -16,3 +16,7 @@ server.out.log
 
 # Misc
 .DS_Store
+
+# Environment files
+.env
+.env.*
