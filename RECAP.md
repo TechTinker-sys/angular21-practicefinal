@@ -27,3 +27,7 @@ There is currently no note approval state or approval endpoint, and the project 
 ## Errors and validation
 
 The API returns JSON error messages with HTTP status codes. Missing or invalid login fields return `400`; invalid credentials return `401`; missing, invalid, expired, or revoked tokens return `401`; insufficient role permissions return `403`; missing notes return `404`; duplicate signup emails return `409`. Signup validates name, email format, and password length. Note creation requires a title or content, and pagination parameters are checked for numeric, positive values.
+
+## Testing
+
+Run `npm test` for the notes API unit and integration suites, `npm run test:unit` or `npm run test:integration` for an individual suite, and `npm run test:angular` for Angular tests. Integration tests run migrations against and use only a temporary MySQL Testcontainers instance; they clean up tables and stop the container afterward.
