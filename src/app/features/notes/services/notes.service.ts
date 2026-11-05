@@ -6,7 +6,7 @@ import { Note, NotesResponse, NoteInput } from '../models/note';
 @Injectable({ providedIn: 'root' })
 export class NotesService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = '/api/notes';
+  private readonly apiUrl = 'http://localhost:4001/api/notes';
 
   getNotes(page = 1, limit = 5): Observable<NotesResponse> {
     return this.http.get<NotesResponse>(`${this.apiUrl}?page=${page}&limit=${limit}`);

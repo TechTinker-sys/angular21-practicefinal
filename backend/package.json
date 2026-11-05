@@ -1,0 +1,42 @@
+{
+  "name": "angular21-practice-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "db:migrate": "sequelize-cli db:migrate --config sequelize.config.cjs --migrations-path src/loaders/database/migrations",
+    "db:seed": "sequelize-cli db:seed:all --config sequelize.config.cjs --migrations-path src/loaders/database/migrations --seeders-path src/loaders/database/seeders"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^18.0.9",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.24.6",
+    "pino": "^9.6.0",
+    "sequelize": "^6.37.8",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@testcontainers/mysql": "^12.2.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.19.43",
+    "@types/supertest": "^6.0.3",
+    "sequelize-cli": "^6.6.5",
+    "supertest": "^7.3.1",
+    "testcontainers": "^12.2.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

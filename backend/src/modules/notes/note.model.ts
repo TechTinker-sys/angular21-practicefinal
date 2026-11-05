@@ -5,9 +5,9 @@ import {
   InferCreationAttributes,
   Model,
 } from 'sequelize';
-import { sequelize } from '../database';
+import { sequelize } from '../../loaders/database.js';
 
-export class Note extends Model<InferAttributes<Note>, InferCreationAttributes<Note>> {
+export class NoteModel extends Model<InferAttributes<NoteModel>, InferCreationAttributes<NoteModel>> {
   declare id: CreationOptional<string>;
   declare title: string;
   declare content: string;
@@ -15,7 +15,7 @@ export class Note extends Model<InferAttributes<Note>, InferCreationAttributes<N
   declare updatedAt: CreationOptional<Date>;
 }
 
-Note.init(
+NoteModel.init(
   {
     id: {
       type: DataTypes.UUID,

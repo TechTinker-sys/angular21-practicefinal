@@ -1,5 +1,41 @@
 # Angular21Practice Architecture
 
+## Backend architecture
+
+The standalone Node.js and Express API is a feature-based modular monolith in
+`backend/`. `backend/src/modules/auth`, `users`, and `notes` each own their
+routes, controllers, services, repositories, Sequelize models, and Zod schemas.
+`backend/src/app.ts` is the composition root: it creates repository adapters,
+injects them into services, mounts routers, and registers the central error
+handler. Express middleware and database connection setup, validated
+environment configuration, logger, and shared middleware live in loaders,
+config, and common.
+
+The backend runs independently from Angular SSR on port `4001` by default.
+Angular's API services address that backend directly; CORS allows only the
+configured origins (the local Angular ports by default). Migrations and seeders
+are under `backend/src/loaders/database`. The backend reads `backend/.env`,
+which is ignored; `backend/.env.example` contains empty keys only.
+
+This structure separates HTTP, use-case, and persistence responsibilities
+without introducing independently deployed services. It follows the
+Twelve-Factor recommendation to keep deploy-specific configuration out of code
+and Express's guidance for centralized error propagation.
+
+### Why this pattern
+
+Express does not prescribe one production directory layout. This structure
+applies feature ownership and clear dependency boundaries without imposing
+microservices or a heavyweight DDD framework on a small application. It follows
+the Twelve-Factor recommendation to keep deploy-specific configuration outside
+the codebase and Express's production guidance for centralized error
+propagation. Relevant references:
+
+- [Express production performance and reliability](https://expressjs.com/en/advanced/best-practice-performance/)
+- [Express production security](https://expressjs.com/en/advanced/best-practice-security/)
+- [Twelve-Factor App: Config](https://12factor.net/config)
+- [Node.js environment variables](https://nodejs.org/en/learn/command-line/how-to-read-environment-variables-from-nodejs)
+
 ## Overview
 
 This project has been reorganized to follow a modern Angular app structure with a clear separation between:

@@ -5,11 +5,10 @@ import {
   InferCreationAttributes,
   Model,
 } from 'sequelize';
-import { sequelize } from '../database';
+import { sequelize } from '../../loaders/database.js';
+import type { UserRole } from './user.schema.js';
 
-export type UserRole = 'admin' | 'viewer';
-
-export class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
+export class UserModel extends Model<InferAttributes<UserModel>, InferCreationAttributes<UserModel>> {
   declare id: CreationOptional<string>;
   declare name: string;
   declare email: string;
@@ -19,7 +18,7 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
   declare updatedAt: CreationOptional<Date>;
 }
 
-User.init(
+UserModel.init(
   {
     id: {
       type: DataTypes.UUID,

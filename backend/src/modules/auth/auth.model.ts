@@ -5,18 +5,18 @@ import {
   InferCreationAttributes,
   Model,
 } from 'sequelize';
-import { sequelize } from '../database';
+import { sequelize } from '../../loaders/database.js';
 
-export class RevokedToken extends Model<
-  InferAttributes<RevokedToken>,
-  InferCreationAttributes<RevokedToken>
+export class RevokedTokenModel extends Model<
+  InferAttributes<RevokedTokenModel>,
+  InferCreationAttributes<RevokedTokenModel>
 > {
   declare tokenHash: string;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 }
 
-RevokedToken.init(
+RevokedTokenModel.init(
   {
     tokenHash: {
       type: DataTypes.CHAR(64),

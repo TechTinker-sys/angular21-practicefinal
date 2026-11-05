@@ -1,11 +1,13 @@
 # Project recap
 
-This repository is an Angular SSR app with an Express notes API, rather than a standalone Node.js backend.
+This repository contains an Angular SSR frontend and a standalone Node.js and Express API in `backend/`.
 
 ## Folder structure
 
-- `src/server.ts` configures Express, mounts API routes, and serves the Angular SSR app.
-- `src/api/` contains the authentication and notes routers, Sequelize connection, models, migrations, and seeders.
+- `src/server.ts` serves the Angular SSR app independently from the backend API.
+- `backend/src/app.ts` composes the Express application; `backend/src/server.ts` connects to MySQL and starts the API server.
+- `backend/src/modules/` contains the feature-based `auth`, `users`, and `notes` modules. Services receive repositories through the backend composition root.
+- `backend/src/loaders/database/` contains the Sequelize migrations and seeders; feature-owned Sequelize models live within their modules.
 - `src/app/features/` contains the Angular auth, notes, home, about, and playground features.
 - `src/app/core/` contains app-wide configuration; `src/app/shared/` contains reusable UI components and pages.
 - `public/` contains static assets, and `docs/` contains architecture documentation.
@@ -16,7 +18,7 @@ The auth API supports signup, login, logout, and the current-user endpoint. Sign
 
 ## Database
 
-The API uses Sequelize with MySQL through `mysql2`. It reads `DB_HOST`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` from the root `.env` file. Run `npm run db:migrate` to create the tables and `npm run db:seed` to add the initial admin account. User accounts, notes, and token revocations persist across server restarts.
+The API uses Sequelize with MySQL through `mysql2`. It reads its settings from ignored `backend/.env`; `backend/.env.example` lists the required keys without values. The backend defaults to port `4001`. Run `npm --prefix backend run db:migrate` to create the tables and `npm --prefix backend run db:seed` to add the initial admin account. User accounts, notes, and token revocations persist across server restarts.
 
 ## Roles, notes, approval, and notifications
 
@@ -30,4 +32,4 @@ The API returns JSON error messages with HTTP status codes. Missing or invalid l
 
 ## Testing
 
-Run `npm test` for the notes API unit and integration suites, `npm run test:unit` or `npm run test:integration` for an individual suite, and `npm run test:angular` for Angular tests. Integration tests run migrations against and use only a temporary MySQL Testcontainers instance; they clean up tables and stop the container afterward.
+Run `npm --prefix backend test` for the API suites, `npm --prefix backend run test:unit` or `npm --prefix backend run test:integration` for an individual suite, and `npm run test:angular` for Angular tests. Integration tests run migrations and the admin seeder against a temporary MySQL Testcontainers instance; they clean up tables and stop the container afterward.

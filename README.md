@@ -62,6 +62,45 @@ ng e2e
 
 Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
+## Backend API
+
+The standalone Express API is in `backend/`; Angular SSR runs separately. The
+backend reads its settings from `backend/.env`. Use `backend/.env.example` as a
+key list and keep secrets only in the ignored `.env` file. The API defaults to
+port `4001`; its CORS allowlist defaults to Angular on ports `4000` and `4200`.
+
+Install backend dependencies, migrate the configured MySQL database, and start
+the API:
+
+```bash
+npm install --prefix backend
+npm --prefix backend run db:migrate
+npm --prefix backend run dev
+```
+
+In another terminal, run Angular:
+
+```bash
+npm start
+```
+
+Run backend tests with:
+
+```bash
+npm --prefix backend test
+npm --prefix backend run test:unit
+npm --prefix backend run test:integration
+```
+
+For production, build and start each application separately:
+
+```bash
+npm --prefix backend run build
+npm --prefix backend start
+npm run build
+npm run serve:ssr:angular21-practice
+```
+
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

@@ -13,7 +13,7 @@ export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
-  private readonly apiUrl = '/api/auth';
+  private readonly apiUrl = 'http://localhost:4001/api/auth';
 
   private readonly tokenSignal = signal<string | null>(this.getStoredToken());
   private readonly userSignal = signal<User | null>(this.getStoredUser());

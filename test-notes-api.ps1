@@ -1,22 +1,18 @@
-$baseUrl = 'http://localhost:4000/api'
+$baseUrl = 'http://localhost:4001/api'
 $authUrl = "$baseUrl/auth"
 $notesUrl = "$baseUrl/notes"
 
 Write-Host 'Testing authentication and notes API endpoints...'
 
 Write-Host '1) Sign up a new user'
-$signupBody = '{"name":"Test User","email":"test@example.com","password":"password123"}'
-try {
-    $signupResponse = Invoke-RestMethod -Uri "$authUrl/signup" -Method Post -Body $signupBody -ContentType 'application/json'
-    $signupResponse | Format-List
-    $token = $signupResponse.token
-} catch {
-    Write-Host 'User already exists, continuing with login...'
-}
+$testEmail = "test-$([guid]::NewGuid().ToString('N'))@example.test"
+$signupBody = @{ name = 'Test User'; email = $testEmail; password = 'password123'; role = 'admin' } | ConvertTo-Json
+$signupResponse = Invoke-RestMethod -Uri "$authUrl/signup" -Method Post -Body $signupBody -ContentType 'application/json'
+$signupResponse | Format-List
 $headers = @{ Authorization = "Bearer $token" }
 
 Write-Host '2) Log in with the user'
-$loginBody = '{"email":"test@example.com","password":"password123"}'
+$loginBody = @{ email = $testEmail; password = 'password123' } | ConvertTo-Json
 $loginResponse = Invoke-RestMethod -Uri "$authUrl/login" -Method Post -Body $loginBody -ContentType 'application/json'
 $loginResponse | Format-List
 $token = $loginResponse.token
